@@ -19,7 +19,7 @@ export const statusEnum = pgEnum("status", ["Pending", "Approved", "Rejected"]);
 export const genderEnum = pgEnum("gender", ["Male", "Female"]);
 
 export const rolesTable = pgTable("roles", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name").notNull(),
   priority: integer("priority").notNull(),
 });
@@ -32,7 +32,7 @@ export const usersTable = pgTable("users", {
   gender: genderEnum("gender").notNull(),
   image: varchar("image").notNull(),
   phone: varchar("phone").notNull(),
-  address: varchar("address").notNull(),
+  address: varchar("address"),
   department: varchar("department"),
   roleId: integer("role_id").references(() => rolesTable.id),
   ...timestamps,
@@ -40,10 +40,10 @@ export const usersTable = pgTable("users", {
 
 export const leaveRequestsTable = pgTable("leave_requests", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: integer("user_id").references(() => usersTable.id),
+  userId: uuid("user_id").references(() => usersTable.id),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
-  requestToId: integer("request_to_id").references(() => usersTable.id),
+  requestToId: uuid("request_to_id").references(() => usersTable.id),
   leaveType: leaveTypeEnum("leave_type").notNull(),
   reason: text("reason").notNull(),
   status: statusEnum("status").default("Pending"),
@@ -52,7 +52,7 @@ export const leaveRequestsTable = pgTable("leave_requests", {
 
 export const userLeavesTable = pgTable("user_leaves", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: integer("user_id").references(() => usersTable.id),
+  userId: uuid("user_id").references(() => usersTable.id),
   totalLeave: integer("total_leave").notNull(),
   availableLeave: integer("available_leave").notNull(),
   usedLeave: integer("used_leave").notNull(),
