@@ -63,9 +63,8 @@ export const userLeavesTable = pgTable("user_leaves", {
   }),
   totalLeave: integer("total_leave").notNull(),
   availableLeave: integer("available_leave").notNull(),
-  usedLeave: integer("used_leave").notNull(),
+  usedLeave: integer("used_leave").default(0).notNull(),
   academicYear: varchar("academic_year").notNull(),
-  totalWorkingDays: integer("total_working_days").notNull(),
   attendancePercentage: decimal("attendance_percentage").notNull(),
   ...timestamps,
 });
