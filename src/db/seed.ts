@@ -16,18 +16,15 @@ async function seed() {
     const adminUser: typeof usersTable.$inferInsert = {
       name: "Admin",
       email: "admin@example.com",
-      gender: "Male",
+      gender: "male",
       password: adminPassword,
       image: "",
       phone: "0000000000",
-      department: "Administration",
       roleId: 1,
     };
-    await db
-      .insert(usersTable)
-      .values(adminUser)
-      .onConflictDoNothing({ target: usersTable.name });
+    await db.insert(usersTable).values(adminUser).onConflictDoNothing();
     console.log("Seeding completed");
+    process.exit(1);
   } catch (error) {
     console.error("Error:", error.message);
   }
