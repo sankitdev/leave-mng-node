@@ -4,30 +4,15 @@ import { db } from "../db/index";
 import { hash, compare } from "bcrypt";
 import { eq } from "drizzle-orm";
 import { generateToken } from "../utils/generateToken";
+import { userSchema } from "../validations/validation";
 export const studentRegister = async (req: Request, res: Response) => {
   try {
-    const {
-      name,
-      email,
-      password,
-      gender,
-      image,
-      phone,
-      address,
-      department,
-      roleId,
-    } = req.body;
-    const hashPass = await hash(password, 10);
+    const userData = userSchema.parse(req.body);
+    const hashPass = await hash(userData.password, 10);
     const user: typeof usersTable.$inferInsert = {
-      name,
-      email,
+      ...userData,
       password: hashPass,
-      gender,
-      image,
-      phone,
-      address,
-      department,
-      roleId,
+      roleId: 4,
     };
     await db.insert(usersTable).values(user);
     res.status(201).json({ message: "Student registered successfully" });
