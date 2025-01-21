@@ -1,11 +1,17 @@
 {
+  "scripts": {
+    "start": "bun --watch src/server.ts "
+  },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
     "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^8.21.0",
     "@typescript-eslint/parser": "^8.21.0",
     "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^16.4.7",
     "drizzle-kit": "^0.30.2",
     "drizzle-orm": "^0.38.4",
