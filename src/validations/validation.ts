@@ -20,7 +20,6 @@ export const userSchema = z.object({
 
 export const leaveRequestSchema = z
   .object({
-    id: z.string().uuid(),
     userId: z.string().uuid(),
     startDate: timestampSchema,
     endDate: timestampSchema,
@@ -36,7 +35,6 @@ export const leaveRequestSchema = z
 
 export const userLeavesSchema = z
   .object({
-    id: z.string().uuid(),
     userId: z.string().uuid(),
     totalLeave: z.number().int().positive(),
     availableLeave: z.number().int().min(0),

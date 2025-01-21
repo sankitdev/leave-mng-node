@@ -4,7 +4,7 @@ import { db } from "../db/index";
 import { hash, compare } from "bcrypt";
 import { eq } from "drizzle-orm";
 import { generateToken } from "../utils/generateToken";
-import { userSchema } from "../validations/validation";
+import { leaveRequestSchema, userSchema } from "../validations/validation";
 export const studentRegister = async (req: Request, res: Response) => {
   try {
     const userData = userSchema.parse(req.body);
@@ -58,6 +58,22 @@ export const getUsers = async (req: Request, res: Response) => {
   try {
     const users = await db.select().from(usersTable);
     res.status(200).json({ users });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const updateProfile = async (req: Request, res: Response) => {
+  try {
+    const updatedData = userSchema.parse(req.body);
+    await db.update(usersTable).set({ ...updatedData });
+    res.status(200).json({ message: "Updated Successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const leaveRequest = async (req: Request, res: Response) => {
+  try {
+    const studentLeave = leaveRequestSchema.parse(req.body);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
