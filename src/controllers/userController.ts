@@ -1,8 +1,9 @@
-import { usersTable } from "./../db/schema";
+import { rolesTable, usersTable } from "./../db/schema";
 import { Request, Response } from "express";
 import { db } from "../db/index";
 import { hash, compare } from "bcrypt";
 import { eq } from "drizzle-orm";
+import { generateToken } from "../utils/generateToken";
 export const studentRegister = async (req: Request, res: Response) => {
   try {
     const {
@@ -34,7 +35,7 @@ export const studentRegister = async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 };
-export const login = async (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -51,13 +52,28 @@ export const login = async (req: Request, res: Response) => {
     if (!isValidPassword) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
-    return res
-      .status(200)
-      .json({
-        message: "Login successful",
-        user: { id: user[0].id, email: user[0].email },
-      });
+    const userRole = await db
+      .select({ roles: rolesTable.name })
+      .from(usersTable)
+      .innerJoin(rolesTable, eq(usersTable.roleId, rolesTable.id));
+    const token = generateToken(userRole[0].roles);
+    res.cookie("authToken", token, {
+      httpOnly: true,
+      maxAge: 3600000,
+      secure: true,
+    });
+    return res.status(200).json({
+      message: `Login successful for ${userRole[0].roles}`,
+    });
   } catch (error) {
     return res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const getUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await db.select().from(usersTable);
+    res.status(200).json({ users });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
   }
 };
