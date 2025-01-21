@@ -1,6 +1,6 @@
 {
-  "id": "3dcb038d-0d62-4ca9-a2ec-5f11289abfe9",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "c5718da1-1482-4130-a969-9a86a87dbced",
+  "prevId": "3dcb038d-0d62-4ca9-a2ec-5f11289abfe9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -309,7 +309,7 @@
           "type": "department",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "role_id": {
           "name": "role_id",
