@@ -35,7 +35,7 @@ export const studentRegister = async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 };
-export const loginUser = async (req: Request, res: Response) => {
+export const loginUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
