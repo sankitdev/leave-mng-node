@@ -1,5 +1,5 @@
 import { z } from "zod";
-const timestampSchema = z.coerce.date();
+const timestampSchema = z.string().date();
 const leaveTypeEnum = z.enum(["first_half", "second_half", "full_day"]);
 const statusEnum = z.enum(["pending", "approved", "rejected"]);
 const genderEnum = z.enum(["male", "female"]);
@@ -9,7 +9,7 @@ export const userSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "Password should be at least 6 characters long"),
   gender: genderEnum,
-  image: z.string().url(),
+  image: z.string(),
   phone: z
     .string()
     .min(10, "Phone number should be at least 10 characters long"),
@@ -20,13 +20,13 @@ export const userSchema = z.object({
 
 export const leaveRequestSchema = z
   .object({
-    userId: z.string().uuid(),
+    userId: z.string().uuid().optional(),
     startDate: timestampSchema,
     endDate: timestampSchema,
     requestToId: z.string().uuid(),
     leaveType: leaveTypeEnum,
     reason: z.string().min(1, "Reason is required"),
-    status: statusEnum,
+    status: statusEnum.default("pending"),
   })
   .refine((data) => data.endDate >= data.startDate, {
     message: "End date must be same as or after the start date",

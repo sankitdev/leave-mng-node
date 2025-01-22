@@ -7,6 +7,7 @@ import {
   decimal,
   pgEnum,
   uuid,
+  date,
 } from "drizzle-orm/pg-core";
 import { timestamps } from "./column.helper";
 
@@ -45,8 +46,8 @@ export const leaveRequestsTable = pgTable("leave_requests", {
   userId: uuid("user_id").references(() => usersTable.id, {
     onDelete: "cascade",
   }),
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
   requestToId: uuid("request_to_id").references(() => usersTable.id, {
     onDelete: "set null",
   }),
