@@ -15,6 +15,13 @@
       "when": 1737456487026,
       "tag": "0001_mushy_lorna_dane",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1737523337285,
+      "tag": "0002_gigantic_preak",
+      "breakpoints": true
     }
   ]
 }
