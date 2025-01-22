@@ -1,10 +1,11 @@
-import { rolesTable, usersTable } from "./../db/schema";
+import { leaveRequestsTable, rolesTable, usersTable } from "./../db/schema";
 import { Request, Response } from "express";
 import { db } from "../db/index";
 import { hash, compare } from "bcrypt";
 import { eq } from "drizzle-orm";
 import { generateToken } from "../utils/generateToken";
 import { leaveRequestSchema, userSchema } from "../validations/validation";
+import { main } from "../services/emailService";
 export const studentRegister = async (req: Request, res: Response) => {
   try {
     const userData = userSchema.parse(req.body);
@@ -17,7 +18,7 @@ export const studentRegister = async (req: Request, res: Response) => {
     await db.insert(usersTable).values(user);
     res.status(201).json({ message: "Student registered successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error });
   }
 };
 export const loginUser = async (req: Request, res: Response): Promise<any> => {
@@ -40,15 +41,20 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     const userRole = await db
       .select({ roles: rolesTable.name })
       .from(usersTable)
-      .innerJoin(rolesTable, eq(usersTable.roleId, rolesTable.id));
-    const token = generateToken(userRole[0].roles);
+      .innerJoin(rolesTable, eq(usersTable.roleId, rolesTable.id))
+      .where(eq(usersTable.id, user[0].id));
+    const userData = {
+      id: user[0].id,
+      role: userRole[0].roles,
+    };
+    const token = generateToken(userData);
     res.cookie("authToken", token, {
       httpOnly: true,
       maxAge: 3600000,
       secure: true,
     });
     return res.status(200).json({
-      message: `Login successful for ${userRole[0].roles}`,
+      message: `Login successful for ${userData.role}`,
     });
   } catch (error) {
     return res.status(500).json({ error: "Internal server error" });
@@ -73,8 +79,15 @@ export const updateProfile = async (req: Request, res: Response) => {
 };
 export const leaveRequest = async (req: Request, res: Response) => {
   try {
-    const studentLeave = leaveRequestSchema.parse(req.body);
+    const studentLeave: typeof leaveRequestsTable.$inferInsert =
+      leaveRequestSchema.parse(req.body);
+    const userData = req.user;
+    await db
+      .insert(leaveRequestsTable)
+      .values({ userId: userData.id, ...studentLeave });
+    main();
+    res.status(200).json({ message: `Leave Applied` });
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: error });
   }
 };
