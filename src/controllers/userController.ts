@@ -60,31 +60,22 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
-export const getUsers = async (req: Request, res: Response) => {
-  try {
-    const users = await db.select().from(usersTable);
-    res.status(200).json({ users });
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const updatedData = userSchema.parse(req.body);
     await db.update(usersTable).set({ ...updatedData });
     res.status(200).json({ message: "Updated Successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: error.issue });
   }
 };
 export const leaveRequest = async (req: Request, res: Response) => {
   try {
     const studentLeave: typeof leaveRequestsTable.$inferInsert =
       leaveRequestSchema.parse(req.body);
-    const userData = req.user;
-    await db
-      .insert(leaveRequestsTable)
-      .values({ userId: userData.id, ...studentLeave });
+    const { id } = req.user.userData;
+    console.log(id);
+    await db.insert(leaveRequestsTable).values({ ...studentLeave, userId: id });
     main();
     res.status(200).json({ message: `Leave Applied` });
   } catch (error) {
