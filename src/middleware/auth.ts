@@ -16,7 +16,6 @@ export const auth = (allowedRoles?: string[]) => {
         if (err) {
           return res.status(401).json({ message: "Unauthorized Access" });
         }
-        console.log(decoded);
         req.user = decoded;
         if (allowedRoles && !allowedRoles.includes(decoded.userData.role)) {
           return res.status(403).json({
