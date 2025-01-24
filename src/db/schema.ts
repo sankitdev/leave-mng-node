@@ -7,6 +7,7 @@ import {
   pgEnum,
   uuid,
   date,
+  timestamp,
 } from "drizzle-orm/pg-core";
 import { timestamps } from "./column.helper";
 
@@ -38,6 +39,16 @@ export const usersTable = pgTable("users", {
     onDelete: "set null",
   }),
   ...timestamps,
+});
+
+export const sessionsTable = pgTable("sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => usersTable.id, {
+    onDelete: "cascade",
+  }),
+  sessionToken: varchar("session_token").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
 });
 
 export const leaveRequestsTable = pgTable("leave_requests", {
