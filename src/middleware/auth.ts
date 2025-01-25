@@ -16,12 +16,12 @@ export const auth = (allowedRoles?: string[]) => {
         if (err) {
           return res.status(401).json({ message: "Unauthorized Access" });
         }
-        req.user = decoded;
         if (allowedRoles && !allowedRoles.includes(decoded.userData.role)) {
           return res.status(403).json({
             message: "Forbidden: You do not have access to this resource",
           });
         }
+        res.locals = decoded;
         next();
       });
     } catch (error) {

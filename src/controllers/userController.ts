@@ -73,8 +73,7 @@ export const leaveRequest = async (req: Request, res: Response) => {
   try {
     const studentLeave: typeof leaveRequestsTable.$inferInsert =
       leaveRequestSchema.parse(req.body);
-    const { id } = req.user.userData;
-    console.log(id);
+    const { id } = res.locals.userData;
     await db.insert(leaveRequestsTable).values({ ...studentLeave, userId: id });
     main();
     res.status(200).json({ message: `Leave Applied` });
