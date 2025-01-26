@@ -6,3 +6,10 @@ if (!DATABASE_URL) {
 }
 
 export const db = drizzle(DATABASE_URL); //Datbase Connection (Neon)
+db.execute("SELECT 1") // Test query to check the connection
+  .then(() => {
+    console.log("Database connected successfully!");
+  })
+  .catch((error) => {
+    console.error("Failed to connect to the database:", error);
+  });
