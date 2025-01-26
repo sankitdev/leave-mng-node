@@ -28,24 +28,24 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
       return res.status(400).json({ error: "Enter credentials" });
     }
     const user = await db
-      .select()
+      .select({
+        id: usersTable.id,
+        password: usersTable.password,
+        role: rolesTable.name,
+      })
       .from(usersTable)
+      .innerJoin(rolesTable, eq(usersTable.roleId, rolesTable.id))
       .where(eq(usersTable.email, email));
-    if (user.length === 0) {
+    if (!user?.[0]) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
     const isValidPassword = await compare(password, user[0].password);
     if (!isValidPassword) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
-    const userRole = await db
-      .select({ roles: rolesTable.name })
-      .from(usersTable)
-      .innerJoin(rolesTable, eq(usersTable.roleId, rolesTable.id))
-      .where(eq(usersTable.id, user[0].id));
     const userData = {
       id: user[0].id,
-      role: userRole[0].roles,
+      role: user[0].role,
     };
     const token = generateToken(userData);
     res.cookie("authToken", token, {
@@ -57,6 +57,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
       message: `Login successful for ${userData.role}`,
     });
   } catch (error) {
+    console.error("Error during login:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
