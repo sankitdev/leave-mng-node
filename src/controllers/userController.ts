@@ -55,13 +55,14 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     });
     return res.status(200).json({
       message: `Login successful for ${userData.role}`,
+      userData,
     });
   } catch (error) {
     console.error("Error during login:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
-export const logoutUser = (req, res) => {
+export const logoutUser = (req: Request, res: Response) => {
   try {
     const token = req.cookies.authToken;
     if (!token) {
@@ -70,7 +71,6 @@ export const logoutUser = (req, res) => {
     res.clearCookie("authToken", {
       httpOnly: true,
       maxAge: 0,
-      sameSite: "None",
       secure: true,
     });
     res.status(200).json({ message: "Logout successful" });
