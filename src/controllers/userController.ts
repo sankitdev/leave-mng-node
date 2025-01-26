@@ -61,6 +61,23 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+export const logoutUser = (req, res) => {
+  try {
+    const token = req.cookies.authToken;
+    if (!token) {
+      return res.status(401).json({ message: "Please Login" });
+    }
+    res.clearCookie("authToken", {
+      httpOnly: true,
+      maxAge: 0,
+      sameSite: "None",
+      secure: true,
+    });
+    res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const updatedData = userSchema.parse(req.body);
