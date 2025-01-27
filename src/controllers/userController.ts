@@ -29,7 +29,8 @@ export const studentRegister = async (req: Request, res: Response) => {
     });
     res.status(201).json({ message: "Student registered successfully" });
   } catch (error) {
-    res.status(500).json({ error: error });
+    console.error("Error Registering Student:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 export const loginUser = async (req: Request, res: Response): Promise<any> => {
@@ -86,7 +87,8 @@ export const logoutUser = (req: Request, res: Response) => {
     });
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error while Logout:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 export const updateProfile = async (req: Request, res: Response) => {
@@ -95,7 +97,8 @@ export const updateProfile = async (req: Request, res: Response) => {
     await db.update(usersTable).set({ ...updatedData });
     res.status(200).json({ message: "Updated Successfully" });
   } catch (error) {
-    res.status(500).json({ error: error.issue });
+    console.error("Error while profile update:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 export const leaveRequest = async (req: Request, res: Response) => {
@@ -107,6 +110,7 @@ export const leaveRequest = async (req: Request, res: Response) => {
     main();
     res.status(200).json({ message: `Leave Applied` });
   } catch (error) {
-    res.status(500).json({ error: error });
+    console.error("Error while requesting Leave:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
