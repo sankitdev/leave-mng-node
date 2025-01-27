@@ -1,5 +1,17 @@
 import { z } from "zod";
-const timestampSchema = z.string().date();
+const timestampSchema = z.string().refine(
+  (date) => {
+    const inputDate = new Date(date);
+    const today = new Date();
+
+    // Normalize time to 00:00:00 for accurate comparison
+    today.setHours(0, 0, 0, 0);
+    inputDate.setHours(0, 0, 0, 0);
+
+    return inputDate >= today;
+  },
+  { message: "Date must be today or a future date" }
+);
 const leaveTypeEnum = z.enum(["first_half", "second_half", "full_day"]);
 const statusEnum = z.enum(["pending", "approved", "rejected"]);
 const genderEnum = z.enum(["male", "female"]);
