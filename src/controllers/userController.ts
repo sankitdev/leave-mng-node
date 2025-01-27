@@ -1,4 +1,9 @@
-import { leaveRequestsTable, rolesTable, usersTable } from "./../db/schema";
+import {
+  leaveRequestsTable,
+  rolesTable,
+  userLeavesTable,
+  usersTable,
+} from "./../db/schema";
 import { Request, Response } from "express";
 import { db } from "../db/index";
 import { hash, compare } from "bcrypt";
@@ -6,16 +11,22 @@ import { eq } from "drizzle-orm";
 import { generateToken } from "../utils/generateToken";
 import { leaveRequestSchema, userSchema } from "../validations/validation";
 import { main } from "../services/emailService";
+import getAcademicYear from "../utils/getAcademicYear";
 export const studentRegister = async (req: Request, res: Response) => {
   try {
     const userData = userSchema.parse(req.body);
     const hashPass = await hash(userData.password, 10);
-    const user: typeof usersTable.$inferInsert = {
-      ...userData,
-      password: hashPass,
-      roleId: 4,
-    };
-    await db.insert(usersTable).values(user);
+    await db.transaction(async (tx) => {
+      const [newUser] = await tx
+        .insert(usersTable)
+        .values({ ...userData, password: hashPass, roleId: 4 })
+        .returning({ id: usersTable.id });
+
+      if (!newUser) throw new Error("User creation failed");
+      await tx
+        .insert(userLeavesTable)
+        .values({ userId: newUser.id, academicYear: getAcademicYear() });
+    });
     res.status(201).json({ message: "Student registered successfully" });
   } catch (error) {
     res.status(500).json({ error: error });
