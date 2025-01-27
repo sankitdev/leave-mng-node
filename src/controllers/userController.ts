@@ -7,7 +7,7 @@ import {
 import { Request, Response } from "express";
 import { db } from "../db/index";
 import { hash, compare } from "bcrypt";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { generateToken } from "../utils/generateToken";
 import { leaveRequestSchema, userSchema } from "../validations/validation";
 import { main } from "../services/emailService";
@@ -39,27 +39,38 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     if (!email || !password) {
       return res.status(400).json({ error: "Enter credentials" });
     }
-    const user = await db
+
+    const [user] = await db
       .select({
         id: usersTable.id,
         password: usersTable.password,
         role: rolesTable.name,
+        name: usersTable.name,
+        email: usersTable.email,
+        image: usersTable.image,
+        department: usersTable.department,
       })
       .from(usersTable)
       .innerJoin(rolesTable, eq(usersTable.roleId, rolesTable.id))
       .where(eq(usersTable.email, email));
-    if (!user?.[0]) {
+    if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
-    const isValidPassword = await compare(password, user[0].password);
+    const isValidPassword = await compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
+    const { id, role, name, image, department } = user;
+
     const userData = {
-      id: user[0].id,
-      role: user[0].role,
+      id,
+      role,
+      name,
+      email: user.email,
+      image,
+      department,
     };
-    const token = generateToken(userData);
+    const token = generateToken({ id, role });
     res.cookie("authToken", token, {
       httpOnly: true,
       maxAge: 3600000,
@@ -111,6 +122,44 @@ export const leaveRequest = async (req: Request, res: Response) => {
     res.status(200).json({ message: `Leave Applied` });
   } catch (error) {
     console.error("Error while requesting Leave:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+export const leaveData = async (req: Request, res: Response) => {
+  try {
+    const { department } = req.params;
+    if (!department)
+      return res.status(404).json({ message: "Invalid Request" });
+    const students = await db
+      .select({ userId: usersTable.id })
+      .from(usersTable)
+      .where(
+        and(eq(usersTable.roleId, 4), eq(usersTable.department, department))
+      );
+
+    const studentIds = students.map((s) => s.userId);
+
+    if (studentIds.length === 0) {
+      return res.status(200).json({ leaves: [] }); // No students found in the department
+    }
+
+    // Step 2: Fetch approved leave requests for all students in the department
+    const leaveRequests = await db
+      .select({
+        startDate: leaveRequestsTable.startDate,
+        endDate: leaveRequestsTable.endDate,
+      })
+      .from(leaveRequestsTable)
+      .where(
+        and(
+          eq(leaveRequestsTable.status, "approved"),
+          inArray(leaveRequestsTable.userId, studentIds)
+        )
+      );
+
+    res.status(200).json({ leaves: leaveRequests });
+  } catch (error) {
+    console.error("Error while showing leaveData:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
