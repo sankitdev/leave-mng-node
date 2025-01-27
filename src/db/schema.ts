@@ -72,10 +72,12 @@ export const userLeavesTable = pgTable("user_leaves", {
   userId: uuid("user_id").references(() => usersTable.id, {
     onDelete: "cascade",
   }),
-  totalLeave: integer("total_leave").notNull(),
-  availableLeave: integer("available_leave").notNull(),
+  totalLeave: integer("total_leave").notNull().default(20),
+  availableLeave: integer("available_leave").notNull().default(20),
   usedLeave: integer("used_leave").default(0).notNull(),
   academicYear: varchar("academic_year").notNull(),
-  attendancePercentage: decimal("attendance_percentage").notNull(),
+  attendancePercentage: decimal("attendance_percentage")
+    .notNull()
+    .default("100.0"),
   ...timestamps,
 });
