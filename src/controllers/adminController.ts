@@ -1,11 +1,10 @@
 import { hash } from "bcrypt";
 import { db } from "../db";
 import { leaveRequestsTable, userLeavesTable, usersTable } from "../db/schema";
-import { userSchema } from "./../validations/validation";
+import { studentLeaveApprove, userSchema } from "./../validations/validation";
 import { Request, Response } from "express";
 import { roles } from "../config/constant";
 import { eq } from "drizzle-orm";
-import { uuid } from "drizzle-orm/pg-core";
 
 export const addUser = async (req: Request, res: Response): Promise<any> => {
   try {
@@ -76,52 +75,103 @@ export const viewLeave = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-export const leaveApprove = async (req: Request, res: Response) => {
+
+export const processLeaveRequest = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    if (!uuid(id)) {
-      return res.status(400).json({ message: "Invalid UUID format" });
+    const { leaveId } = req.params;
+    const { status } = req.body;
+    const approverId = res.locals.userData.id; // Authenticated user
+
+    // Validate leaveId and status
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
     }
-    // check if any request available with the id
-    const [leaveRequest] = await db
-      .select()
-      .from(leaveRequestsTable)
-      .where(eq(leaveRequestsTable.userId, id));
-    console.log(leaveRequest);
+    // Fetch leave request and approver details in a single query
+    const [leaveRequest, approver] = await Promise.all([
+      db
+        .select()
+        .from(leaveRequestsTable)
+        .where(eq(leaveRequestsTable.id, leaveId))
+        .limit(1)
+        .then((res) => res[0]),
+      db
+        .select({ name: usersTable.name })
+        .from(usersTable)
+        .where(eq(usersTable.id, approverId))
+        .limit(1)
+        .then((res) => res[0]),
+    ]);
+
     if (!leaveRequest) {
-      return res.status(404).json({ message: "No record found" });
+      return res.status(404).json({ message: "Leave request not found" });
     }
     if (leaveRequest.status !== "pending") {
       return res.status(400).json({ message: "Leave request is not pending" });
     }
-    // fetch the user's leave balance
-    const [userLeave] = await db
-      .select()
-      .from(userLeavesTable)
-      .where(eq(userLeavesTable.userId, leaveRequest.userId!));
-    if (!userLeave) {
-      return res.status(404).json({ message: "User leave record not found" });
+    if (!approver) {
+      return res.status(403).json({ message: "Approver not found" });
     }
-    const leaveDeduction = leaveRequest.leaveType === "full_day" ? 1 : 0.5;
-    if (userLeave.availableLeave < leaveDeduction) {
-      return res.status(400).json({ message: "Insufficient leave balance" });
+
+    // Process based on status
+    if (status === "approved") {
+      await handleApprove(leaveRequest, approverId);
+    } else {
+      await handleReject(leaveRequest, approverId);
     }
-    await db.transaction(async (tx) => {
-      await tx
-        .update(userLeavesTable)
-        .set({
-          availableLeave: userLeave.availableLeave - leaveDeduction,
-          usedLeave: userLeave.usedLeave + leaveDeduction,
-        })
-        .where(eq(userLeavesTable.userId, leaveRequest.userId!));
-      await tx
-        .update(leaveRequestsTable)
-        .set({ status: "approved" })
-        .where(eq(leaveRequestsTable.userId, id));
-    });
-    res.status(200).json({ message: "Leave request approved successfully" });
+
+    res.status(200).json({ message: `Leave request ${status} successfully` });
   } catch (error) {
-    console.error("Error approving leave:", error);
+    console.error("Error processing leave request:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
+};
+
+// Approve function (updates leaveRequestsTable & userLeavesTable)
+const handleApprove = async (
+  leaveRequest: typeof leaveRequestsTable.$inferSelect,
+  approverId: string
+) => {
+  // Fetch user's leave balance
+  const userLeave = await db
+    .select()
+    .from(userLeavesTable)
+    .where(eq(userLeavesTable.userId, leaveRequest.userId!))
+    .limit(1)
+    .then((res) => res[0]);
+
+  if (!userLeave) {
+    throw new Error("User leave record not found");
+  }
+
+  const leaveDeduction = leaveRequest.leaveType === "full_day" ? 1 : 0.5;
+  if (userLeave.availableLeave < leaveDeduction) {
+    throw new Error("Insufficient leave balance");
+  }
+
+  // Perform transaction: update userLeavesTable & leaveRequestsTable
+  await db.transaction(async (tx) => {
+    await tx
+      .update(userLeavesTable)
+      .set({
+        availableLeave: userLeave.availableLeave - leaveDeduction,
+        usedLeave: userLeave.usedLeave + leaveDeduction,
+      })
+      .where(eq(userLeavesTable.userId, leaveRequest.userId!));
+
+    await tx
+      .update(leaveRequestsTable)
+      .set({ status: "approved", approvedBy: approverId })
+      .where(eq(leaveRequestsTable.id, leaveRequest.id));
+  });
+};
+
+// Reject function (only updates leaveRequestsTable)
+const handleReject = async (
+  leaveRequest: typeof leaveRequestsTable.$inferSelect,
+  approverId: string
+) => {
+  await db
+    .update(leaveRequestsTable)
+    .set({ status: "rejected", approvedBy: approverId })
+    .where(eq(leaveRequestsTable.id, leaveRequest.id));
 };
