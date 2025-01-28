@@ -117,6 +117,20 @@ export const leaveRequest = async (req: Request, res: Response) => {
     const studentLeave: typeof leaveRequestsTable.$inferInsert =
       leaveRequestSchema.parse(req.body);
     const { id } = res.locals.userData;
+    const { requestToId } = studentLeave;
+    if (!id) {
+      return res.status(401).json({ error: "Unauthorized request" });
+    }
+    const approver = (
+      await db
+        .select({ roleId: usersTable.roleId })
+        .from(usersTable)
+        .where(eq(usersTable.id, requestToId!))
+        .limit(1)
+    ).at(0);
+    if (approver?.roleId === 4) {
+      return res.status(403).json({ message: "Invalid Request" });
+    }
     await db.insert(leaveRequestsTable).values({ ...studentLeave, userId: id });
     main();
     res.status(200).json({ message: `Leave Applied` });
@@ -128,10 +142,13 @@ export const leaveRequest = async (req: Request, res: Response) => {
 export const leaveData = async (req: Request, res: Response) => {
   try {
     const { department } = req.params;
-    if (!department)
-      return res.status(404).json({ message: "Invalid Request" });
+    if (!department) {
+      return res.status(400).json({ message: "Invalid Request" });
+    }
+
+    // Step 1: Get students from the department
     const students = await db
-      .select({ userId: usersTable.id })
+      .select({ userId: usersTable.id, name: usersTable.name }) // Fetch student name
       .from(usersTable)
       .where(
         and(eq(usersTable.roleId, 4), eq(usersTable.department, department))
@@ -143,13 +160,15 @@ export const leaveData = async (req: Request, res: Response) => {
       return res.status(200).json({ leaves: [] }); // No students found in the department
     }
 
-    // Step 2: Fetch approved leave requests for all students in the department
+    // Step 2: Fetch approved leave requests and join with user details
     const leaveRequests = await db
       .select({
         startDate: leaveRequestsTable.startDate,
         endDate: leaveRequestsTable.endDate,
+        studentName: usersTable.name, // Include student name
       })
       .from(leaveRequestsTable)
+      .innerJoin(usersTable, eq(leaveRequestsTable.userId, usersTable.id)) // Join tables
       .where(
         and(
           eq(leaveRequestsTable.status, "approved"),
