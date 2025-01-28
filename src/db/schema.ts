@@ -64,6 +64,9 @@ export const leaveRequestsTable = pgTable("leave_requests", {
   leaveType: leaveTypeEnum("leave_type").notNull(),
   reason: text("reason").notNull(),
   status: statusEnum("status").default("pending"),
+  approvedBy: uuid("approved_by").references(() => usersTable.id, {
+    onDelete: "set null",
+  }),
   ...timestamps,
 });
 
