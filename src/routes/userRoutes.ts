@@ -1,6 +1,7 @@
 import e from "express";
 import {
-  leaveData,
+  getLeaveData,
+  leaveDataOfDepartment,
   leaveRequest,
   loginUser,
   logoutUser,
@@ -13,5 +14,6 @@ user.post("/register", studentRegister);
 user.post("/login", loginUser);
 user.post("/apply-leave", auth(["student"]), leaveRequest);
 user.post("/logout", logoutUser);
-user.get("/leaveData/:department", auth(["student"]), leaveData);
+user.get("/leaveData/:department", auth(["student"]), leaveDataOfDepartment);
+user.get("/leave-data/:userId", auth(["student"]), getLeaveData);
 export default user;
