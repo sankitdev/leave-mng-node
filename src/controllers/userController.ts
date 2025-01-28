@@ -139,7 +139,7 @@ export const leaveRequest = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-export const leaveData = async (req: Request, res: Response) => {
+export const leaveDataOfDepartment = async (req: Request, res: Response) => {
   try {
     const { department } = req.params;
     if (!department) {
@@ -180,5 +180,33 @@ export const leaveData = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error while showing leaveData:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+export const getLeaveData = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  try {
+    const leaves = await db
+      .select({
+        leaveType: leaveRequestsTable.leaveType,
+        from: leaveRequestsTable.startDate,
+        to: leaveRequestsTable.endDate,
+        reason: leaveRequestsTable.reason,
+        approvedBy: usersTable.name,
+        status: leaveRequestsTable.status,
+      })
+      .from(leaveRequestsTable)
+      .leftJoin(usersTable, eq(leaveRequestsTable.approvedBy, usersTable.id)) // Left join to get approver's name
+      .where(eq(leaveRequestsTable.userId, userId));
+    if (leaves.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No leave data found for this student" });
+    }
+    return res.status(200).json({ leaves });
+  } catch (error) {
+    console.error("Error fetching leave data:", error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred while fetching leave data" });
   }
 };
