@@ -4,7 +4,7 @@ import {
   addUser,
   deleteUser,
   getUsers,
-  leaveApprove,
+  processLeaveRequest,
   viewLeave,
 } from "../controllers/adminController";
 const admin = e.Router();
@@ -14,8 +14,8 @@ admin.delete("/user/:role/:userId", auth(["admin"]), deleteUser);
 admin.get("/users", auth(["admin"]), getUsers);
 admin.get("/leaves", auth(["admin", "hod", "staff"]), viewLeave);
 admin.patch(
-  "/leave-approve/:id",
+  "/leave-request/:leaveId/update",
   auth(["admin", "hod", "staff"]),
-  leaveApprove
+  processLeaveRequest
 );
 export default admin;
