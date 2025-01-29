@@ -1,1 +1,0 @@
-ALTER TABLE "users" ALTER COLUMN "department" DROP NOT NULL;

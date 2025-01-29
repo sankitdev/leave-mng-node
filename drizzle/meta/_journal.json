@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1737456268666,
-      "tag": "0000_married_pride",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1737456487026,
-      "tag": "0001_mushy_lorna_dane",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1737523337285,
-      "tag": "0002_gigantic_preak",
+      "when": 1738124892293,
+      "tag": "0000_first_betty_brant",
       "breakpoints": true
     }
   ]
