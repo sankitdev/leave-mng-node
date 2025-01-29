@@ -4,7 +4,7 @@ import { leaveRequestsTable, userLeavesTable, usersTable } from "../db/schema";
 import { userSchema } from "./../validations/validation";
 import { Request, Response } from "express";
 import { roles } from "../config/constant";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { Role } from "../types/types";
 
 export const addUser = async (req: Request, res: Response) => {
@@ -51,12 +51,14 @@ export const updateUser = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-export const deleteUser = async (req: Request, res: Response): Promise<any> => {
+export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { role, userId } = req.params;
     const userRole = roles.find((find) => find.name === role);
-    if (!userRole || userRole.name === "admin")
-      return res.status(400).json({ message: "Invalid role provided" });
+    if (!userRole || userRole.name === "admin") {
+      res.status(400).json({ message: "Invalid role provided" });
+      return;
+    }
     await db.delete(usersTable).where(eq(usersTable.id, userId));
     res.status(200).json({ message: "Successfully Deleted" });
   } catch (error) {
@@ -177,6 +179,12 @@ const handleApprove = async (
       .set({
         availableLeave: userLeave.availableLeave - leaveDeduction,
         usedLeave: userLeave.usedLeave + leaveDeduction,
+        attendancePercentage: (
+          ((userLeave.totalWorkingDays! -
+            (userLeave.usedLeave + leaveDeduction)) /
+            userLeave.totalWorkingDays!) *
+          100
+        ).toFixed(1),
       })
       .where(eq(userLeavesTable.userId, leaveRequest.userId!));
 
@@ -194,4 +202,15 @@ const handleReject = async (
     .update(leaveRequestsTable)
     .set({ status: "rejected", approvedBy: approverId })
     .where(eq(leaveRequestsTable.id, leaveRequest.id));
+};
+export const getStudentData = async (req: Request, res: Response) => {
+  try {
+    const data = await db
+      .select({ count: count() })
+      .from(usersTable)
+      .where(eq(usersTable.roleId, 4));
+  } catch (error) {
+    console.error("Error processing student Data:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
