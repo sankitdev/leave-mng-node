@@ -2,6 +2,7 @@ import { hash } from "bcrypt";
 import { db } from ".";
 import { roles } from "../config/constant";
 import { rolesTable, usersTable } from "./schema";
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from "../config/config";
 
 async function seed() {
   try {
@@ -11,11 +12,10 @@ async function seed() {
         .values(role)
         .onConflictDoNothing({ target: rolesTable.name });
     }
-
-    const adminPassword = await hash("admin123", 10);
+    const adminPassword = await hash(ADMIN_PASSWORD!, 10);
     const adminUser: typeof usersTable.$inferInsert = {
       name: "Admin",
-      email: "admin@example.com",
+      email: ADMIN_EMAIL!,
       gender: "male",
       password: adminPassword,
       image: "",
@@ -24,9 +24,10 @@ async function seed() {
     };
     await db.insert(usersTable).values(adminUser).onConflictDoNothing();
     console.log("Seeding completed");
-    process.exit(1);
+    return;
   } catch (error) {
     console.error("Error:", error.message);
+    process.exit(1);
   }
 }
 
