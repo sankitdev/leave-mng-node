@@ -1,26 +1,32 @@
 import { hash } from "bcrypt";
 import { db } from "../db";
 import { leaveRequestsTable, userLeavesTable, usersTable } from "../db/schema";
-import { studentLeaveApprove, userSchema } from "./../validations/validation";
+import { userSchema } from "./../validations/validation";
 import { Request, Response } from "express";
 import { roles } from "../config/constant";
 import { eq } from "drizzle-orm";
+import { Role } from "../types/types";
 
-export const addUser = async (req: Request, res: Response): Promise<any> => {
+export const addUser = async (req: Request, res: Response) => {
   try {
     const userRole = req.params.role;
     const userData = userSchema.parse(req.body);
     const role = roles.find((find) => find.name === userRole);
-    if (!role || role.name === "admin")
-      return res.status(400).json({ message: "Invalid role provided" });
+    if (!role || role.name === "admin") {
+      res.status(400).json({ message: "Invalid role provided" });
+      return;
+    }
     const hashPass = await hash(userData.password, 10);
     const user: typeof usersTable.$inferInsert = {
       ...userData,
       password: hashPass,
       roleId: role.priority,
     };
-    await db.insert(usersTable).values(user);
-    res.status(201).json({ message: `${user.name} registered successfully` });
+    const data = await db
+      .insert(usersTable)
+      .values(user)
+      .returning({ name: usersTable.name, email: usersTable.email });
+    res.status(201).json(data);
   } catch (error) {
     console.error("Error Updating User:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -30,11 +36,16 @@ export const updateUser = async (req: Request, res: Response) => {
   try {
     const userRole = req.params.role;
     const role = roles.find((find) => find.name === userRole);
-    if (!role || role.name === "admin")
-      return res.status(400).json({ message: "Invalid role provided" });
+    if (!role || role.name === "admin") {
+      res.status(400).json({ message: "Invalid role provided" });
+      return;
+    }
     const updatedData = userSchema.parse(req.body);
-    await db.update(usersTable).set({ ...updatedData });
-    res.status(200).json({ message: "Updated Successfully" });
+    const data = await db
+      .update(usersTable)
+      .set({ ...updatedData })
+      .returning({ name: usersTable.name, email: usersTable.email });
+    res.status(200).json(data);
   } catch (error) {
     console.error("Error Updating User:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -55,8 +66,19 @@ export const deleteUser = async (req: Request, res: Response): Promise<any> => {
 };
 export const getUsers = async (req: Request, res: Response) => {
   try {
-    const users = await db.select().from(usersTable);
-    res.status(200).json({ users });
+    const { role } = req.params as { role: Role };
+    const roleMap: { [key in Role]: number } = {
+      hod: 2,
+      staff: 3,
+      student: 4,
+    };
+    const roleId = roleMap[role];
+    const users = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.roleId, roleId));
+    const safeData = users.map(({ password, ...user }) => user);
+    res.status(200).json(safeData);
   } catch (error) {
     console.error("Error getting user:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -68,14 +90,12 @@ export const viewLeave = async (req: Request, res: Response) => {
       .select()
       .from(leaveRequestsTable)
       .where(eq(leaveRequestsTable.status, "pending"));
-
     res.status(200).json(leaves);
   } catch (error) {
     console.error("Error View leave:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 export const processLeaveRequest = async (req: Request, res: Response) => {
   try {
     const { leaveId } = req.params;
@@ -84,7 +104,8 @@ export const processLeaveRequest = async (req: Request, res: Response) => {
 
     // Validate leaveId and status
     if (!["approved", "rejected"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
+      res.status(400).json({ message: "Invalid status" });
+      return;
     }
     // Fetch leave request and approver details in a single query
     const [leaveRequest, approver] = await Promise.all([
@@ -103,13 +124,16 @@ export const processLeaveRequest = async (req: Request, res: Response) => {
     ]);
 
     if (!leaveRequest) {
-      return res.status(404).json({ message: "Leave request not found" });
+      res.status(404).json({ message: "Leave request not found" });
+      return;
     }
     if (leaveRequest.status !== "pending") {
-      return res.status(400).json({ message: "Leave request is not pending" });
+      res.status(400).json({ message: "Leave request is not pending" });
+      return;
     }
     if (!approver) {
-      return res.status(403).json({ message: "Approver not found" });
+      res.status(403).json({ message: "Approver not found" });
+      return;
     }
 
     // Process based on status
@@ -125,8 +149,6 @@ export const processLeaveRequest = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-// Approve function (updates leaveRequestsTable & userLeavesTable)
 const handleApprove = async (
   leaveRequest: typeof leaveRequestsTable.$inferSelect,
   approverId: string
@@ -143,7 +165,7 @@ const handleApprove = async (
     throw new Error("User leave record not found");
   }
 
-  const leaveDeduction = leaveRequest.leaveType === "full_day" ? 1 : 0.5;
+  const leaveDeduction = leaveRequest.leaveType === "Full Day" ? 1 : 0.5;
   if (userLeave.availableLeave < leaveDeduction) {
     throw new Error("Insufficient leave balance");
   }
@@ -164,8 +186,6 @@ const handleApprove = async (
       .where(eq(leaveRequestsTable.id, leaveRequest.id));
   });
 };
-
-// Reject function (only updates leaveRequestsTable)
 const handleReject = async (
   leaveRequest: typeof leaveRequestsTable.$inferSelect,
   approverId: string
