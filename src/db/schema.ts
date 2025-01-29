@@ -79,6 +79,7 @@ export const userLeavesTable = pgTable("user_leaves", {
   availableLeave: integer("available_leave").notNull().default(20),
   usedLeave: integer("used_leave").default(0).notNull(),
   academicYear: varchar("academic_year").notNull(),
+  totalWorkingDays: integer("total_working_days").default(200),
   attendancePercentage: decimal("attendance_percentage")
     .notNull()
     .default("100.0"),
