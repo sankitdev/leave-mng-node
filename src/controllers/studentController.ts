@@ -1,15 +1,13 @@
-import {
-  leaveRequestsTable,
-  rolesTable,
-  userLeavesTable,
-  usersTable,
-} from "../db/schema";
+import { leaveRequestsTable, userLeavesTable, usersTable } from "../db/schema";
 import { Request, Response } from "express";
 import { db } from "../db/index";
-import { hash, compare } from "bcrypt";
-import { and, eq } from "drizzle-orm";
-import { generateToken } from "../utils/generateToken";
-import { leaveRequestSchema, userSchema } from "../validations/validation";
+import { hash } from "bcrypt";
+import { and, eq, inArray } from "drizzle-orm";
+import {
+  leaveRequestSchema,
+  updateUserSchema,
+  userSchema,
+} from "../validations/validation";
 import { main } from "../services/emailService";
 import getAcademicYear from "../utils/getAcademicYear";
 import { DepartmentType, VALID_DEPARTMENTS } from "../types/types";
@@ -34,11 +32,21 @@ export const studentRegister = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-export const updateProfile = async (req: Request, res: Response) => {
+export const updateStudent = async (req: Request, res: Response) => {
   try {
-    const updatedData = userSchema.parse(req.body);
-    await db.update(usersTable).set({ ...updatedData });
-    res.status(200).json({ message: "Updated Successfully" });
+    const { id } = res.locals.userData;
+    const updatedData = updateUserSchema.parse(req.body);
+    const data = await db
+      .update(usersTable)
+      .set({ ...updatedData })
+      .where(eq(usersTable.id, id))
+      .returning({
+        name: usersTable.name,
+        department: usersTable.department,
+        email: usersTable.email,
+        phone: usersTable.phone,
+      });
+    res.status(200).json(data);
   } catch (error) {
     console.error("Error while profile update:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -146,8 +154,29 @@ export const getLeaveBalance = async (req: Request, res: Response) => {
     res.status(200).json(userLeave);
   } catch (error) {
     console.error("Error fetching leave data:", error);
-    res
-      .status(500)
-      .json({ message: "An error occurred while fetching leave data" });
+    res.status(500).json({ message: "An error occurred while fetching  data" });
+  }
+};
+export const getTeacherForLeave = async (req: Request, res: Response) => {
+  try {
+    const { department } = req.params;
+    const departmentEnum = department as DepartmentType;
+    if (!VALID_DEPARTMENTS.includes(departmentEnum)) {
+      res.status(400).json({ message: "Invalid department" });
+      return;
+    }
+    const teachers = await db
+      .select({ id: usersTable.id, name: usersTable.name })
+      .from(usersTable)
+      .where(
+        and(
+          eq(usersTable.department, departmentEnum),
+          inArray(usersTable.roleId, [2, 3])
+        )
+      );
+    res.status(200).json(teachers);
+  } catch (error) {
+    console.error("Error while fetching teachers", error);
+    res.status(500).json({ message: "Error occured while fetching data" });
   }
 };

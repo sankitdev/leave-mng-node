@@ -64,3 +64,13 @@ export const userLeavesSchema = z
 export const studentLeaveApprove = z.object({
   status: leaveStatusEnum,
 });
+
+export const updateUserSchema = z.object({
+  name: z.string().min(1, "Name is required").optional(),
+  email: z.string().email("Invalid email format").optional(),
+  phone: z
+    .string()
+    .min(10, "Phone number should be at least 10 characters long")
+    .optional(),
+  department: departmentEnum,
+});
