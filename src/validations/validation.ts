@@ -12,8 +12,9 @@ const timestampSchema = z.string().refine(
   },
   { message: "Date must be today or a future date" }
 );
-const leaveTypeEnum = z.enum(["first_half", "second_half", "full_day"]);
+const leaveTypeEnum = z.enum(["First Half", "Second Half", "Full Day"]);
 const statusEnum = z.enum(["pending", "approved", "rejected"]);
+const leaveStatusEnum = z.enum(["approved", "rejected"]);
 const genderEnum = z.enum(["male", "female"]);
 const departmentEnum = z.enum(["cs", "mechanical"]);
 export const userSchema = z.object({
@@ -59,3 +60,7 @@ export const userLeavesSchema = z
     (data) => data.totalLeave >= data.usedLeave + data.availableLeave,
     "Total leave must be greater than or equal to used + available leave"
   );
+
+export const studentLeaveApprove = z.object({
+  status: leaveStatusEnum,
+});

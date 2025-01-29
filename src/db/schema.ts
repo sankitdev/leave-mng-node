@@ -12,9 +12,9 @@ import {
 import { timestamps } from "./column.helper";
 
 export const leaveTypeEnum = pgEnum("leave_type", [
-  "first_half",
-  "second_half",
-  "full_day",
+  "First Half",
+  "Second Half",
+  "Full Day",
 ]);
 export const statusEnum = pgEnum("status", ["pending", "approved", "rejected"]);
 export const genderEnum = pgEnum("gender", ["male", "female"]);
