@@ -1,17 +1,17 @@
 import e from "express";
 import {
   applyLeave,
-  getDepartmentLeaves,
   getLeaveBalance,
+  getLeavesByDepartment,
   getPersonalLeaveRequests,
   studentRegister,
 } from "../controllers/studentController";
 import { auth } from "../middleware/auth";
-const user = e.Router();
+const student = e.Router();
 
-user.post("/register", studentRegister);
-user.post("/apply-leave", auth(["student"]), applyLeave);
-user.get("/leaves/:department", auth(["student"]), getDepartmentLeaves);
-user.get("/leaves/requests", auth(["student"]), getPersonalLeaveRequests);
-user.get("/leaves/balance", auth(["student"]), getLeaveBalance);
-export default user;
+student.post("/register", studentRegister);
+student.post("/apply-leave", auth(["student"]), applyLeave);
+student.get("/leaves/requests", auth(["student"]), getPersonalLeaveRequests);
+student.get("/leaves/balance", auth(["student"]), getLeaveBalance);
+student.get("/leaves/:department", auth(["student"]), getLeavesByDepartment);
+export default student;

@@ -71,7 +71,7 @@ export const applyLeave = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-export const getDepartmentLeaves = async (req: Request, res: Response) => {
+export const getLeavesByDepartment = async (req: Request, res: Response) => {
   try {
     const { department } = req.params;
     const departmentEnum = department as DepartmentType;
