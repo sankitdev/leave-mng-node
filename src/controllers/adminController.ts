@@ -1,12 +1,12 @@
 import { hash } from "bcrypt";
 import { db } from "../db";
 import { leaveRequestsTable, userLeavesTable, usersTable } from "../db/schema";
-import { userSchema } from "./../validations/validation";
+import { updateUserSchema, userSchema } from "./../validations/validation";
 import { Request, Response } from "express";
 import { roles } from "../config/constant";
 import { count, eq } from "drizzle-orm";
 import { Role } from "../types/types";
-
+import { alias } from "drizzle-orm/pg-core";
 export const addUser = async (req: Request, res: Response) => {
   try {
     const userRole = req.params.role;
@@ -40,7 +40,7 @@ export const updateUser = async (req: Request, res: Response) => {
       res.status(400).json({ message: "Invalid role provided" });
       return;
     }
-    const updatedData = userSchema.parse(req.body);
+    const updatedData = updateUserSchema.parse(req.body);
     const data = await db
       .update(usersTable)
       .set({ ...updatedData })
@@ -87,18 +87,24 @@ export const getUsers = async (req: Request, res: Response) => {
   }
 };
 export const viewLeave = async (req: Request, res: Response) => {
+  const studentUsers = alias(usersTable, "student_user");
   try {
     const leaves = await db
       .select({
+        leaveId: leaveRequestsTable.id,
         leaveType: leaveRequestsTable.leaveType,
         from: leaveRequestsTable.startDate,
         to: leaveRequestsTable.endDate,
         reason: leaveRequestsTable.reason,
         approvedBy: usersTable.name,
+        studentName: studentUsers.name,
+        image: studentUsers.image,
         status: leaveRequestsTable.status,
       })
       .from(leaveRequestsTable)
-      .leftJoin(usersTable, eq(leaveRequestsTable.approvedBy, usersTable.id));
+      .leftJoin(usersTable, eq(leaveRequestsTable.approvedBy, usersTable.id))
+      .leftJoin(studentUsers, eq(leaveRequestsTable.userId, studentUsers.id));
+
     // .where(eq(leaveRequestsTable.status, "pending"));
     res.status(200).json({ leaves });
   } catch (error) {
