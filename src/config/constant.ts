@@ -9,7 +9,6 @@ export const student = {
   totalLeave: 20,
   availableLeave: 20,
   usedLeave: 0,
-  academicYear: new Date().getFullYear(),
   totalWorkingDays: 220,
   attendancePercentage: 100,
 };

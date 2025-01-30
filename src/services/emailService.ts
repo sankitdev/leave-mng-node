@@ -18,7 +18,6 @@ export async function main() {
       text: "Hello world?", // plain text body
       html: "<b>Hello world?</b>", // html body
     });
-
     console.log("Message sent: %s", info.messageId);
   } catch (error) {
     console.error("Error", error.message);
