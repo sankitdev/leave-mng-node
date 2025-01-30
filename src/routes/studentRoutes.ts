@@ -6,13 +6,17 @@ import {
   getPersonalLeaveRequests,
   getTeacherForLeave,
   studentRegister,
-  updateStudent,
+  updateProfile,
 } from "../controllers/studentController";
 import { auth } from "../middleware/auth";
 const student = e.Router();
 
 student.post("/register", studentRegister);
-student.patch("/update", auth(["student"]), updateStudent);
+student.patch(
+  "/update-profile",
+  auth(["student", "hod", "staff"]),
+  updateProfile
+);
 student.get("/staff/:department", auth(["student"]), getTeacherForLeave);
 student.post("/apply-leave", auth(["student"]), applyLeave);
 student.get("/leaves/requests", auth(["student"]), getPersonalLeaveRequests);
