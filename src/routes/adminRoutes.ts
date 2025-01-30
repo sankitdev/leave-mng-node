@@ -13,7 +13,7 @@ const admin = e.Router();
 
 admin.post("/user/:role", auth(["admin"]), addUser);
 admin.delete("/user/:role/:userId", auth(["admin"]), deleteUser);
-admin.get("/users/:role", auth(["admin", "hod"]), getUsers);
+admin.get("/users/:role", auth(["admin", "hod", "staff", "student"]), getUsers);
 admin.get("/leaves", auth(["admin", "hod", "staff"]), viewLeave);
 admin.patch(
   "/leave-request/:leaveId/update",
