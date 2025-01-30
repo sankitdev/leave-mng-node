@@ -2,7 +2,9 @@ import e from "express";
 import { auth } from "../middleware/auth";
 import {
   addUser,
+  dashboardInfo,
   deleteUser,
+  getStudentData,
   getUsers,
   processLeaveRequest,
   viewLeave,
@@ -18,4 +20,6 @@ admin.patch(
   auth(["admin", "hod", "staff"]),
   processLeaveRequest
 );
+admin.get("/students", auth(["admin", "hod", "staff"]), getStudentData);
+admin.get("/dashboard", auth(["admin", "hod", "staff"]), dashboardInfo);
 export default admin;

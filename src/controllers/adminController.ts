@@ -89,10 +89,18 @@ export const getUsers = async (req: Request, res: Response) => {
 export const viewLeave = async (req: Request, res: Response) => {
   try {
     const leaves = await db
-      .select()
+      .select({
+        leaveType: leaveRequestsTable.leaveType,
+        from: leaveRequestsTable.startDate,
+        to: leaveRequestsTable.endDate,
+        reason: leaveRequestsTable.reason,
+        approvedBy: usersTable.name,
+        status: leaveRequestsTable.status,
+      })
       .from(leaveRequestsTable)
-      .where(eq(leaveRequestsTable.status, "pending"));
-    res.status(200).json(leaves);
+      .leftJoin(usersTable, eq(leaveRequestsTable.approvedBy, usersTable.id));
+    // .where(eq(leaveRequestsTable.status, "pending"));
+    res.status(200).json({ leaves });
   } catch (error) {
     console.error("Error View leave:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -209,8 +217,37 @@ export const getStudentData = async (req: Request, res: Response) => {
       .select({ count: count() })
       .from(usersTable)
       .where(eq(usersTable.roleId, 4));
+    res.status(200).json(data);
   } catch (error) {
     console.error("Error processing student Data:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const dashboardInfo = async (req: Request, res: Response) => {
+  try {
+    const [pendingRequests, approvedRequests, rejectedRequests] =
+      await Promise.all([
+        db
+          .select({ count: count() })
+          .from(leaveRequestsTable)
+          .where(eq(leaveRequestsTable.status, "pending")),
+        db
+          .select({ count: count() })
+          .from(leaveRequestsTable)
+          .where(eq(leaveRequestsTable.status, "approved")),
+        db
+          .select({ count: count() })
+          .from(leaveRequestsTable)
+          .where(eq(leaveRequestsTable.status, "rejected")),
+      ]);
+
+    res.json({
+      pendingRequests: pendingRequests[0].count,
+      approvedRequests: approvedRequests[0].count,
+      rejectedRequests: rejectedRequests[0].count,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
   }
 };
