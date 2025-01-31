@@ -70,7 +70,10 @@ export const loginUser = async (req: Request, res: Response) => {
       httpOnly: true,
       maxAge: 3600000,
       secure: true,
+      sameSite: "none",
+      path: "/",
     });
+
     res.status(200).json({
       message: `Login successful for ${userData.role}`,
       userData,
