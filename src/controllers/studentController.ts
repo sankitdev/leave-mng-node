@@ -91,8 +91,8 @@ export const getLeavesByDepartment = async (req: Request, res: Response) => {
     const leaveRequests = await db
       .select({
         studentName: usersTable.name,
-        startDate: leaveRequestsTable.startDate,
-        endDate: leaveRequestsTable.endDate,
+        from: leaveRequestsTable.startDate,
+        to: leaveRequestsTable.endDate,
       })
       .from(leaveRequestsTable)
       .innerJoin(usersTable, eq(leaveRequestsTable.userId, usersTable.id))
