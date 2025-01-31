@@ -46,6 +46,7 @@ export const updateProfile = async (req: Request, res: Response) => {
         department: usersTable.department,
         email: usersTable.email,
         phone: usersTable.phone,
+        image: usersTable.image,
       });
     res.status(200).json(data);
   } catch (error) {
@@ -112,7 +113,10 @@ export const getLeavesByDepartment = async (req: Request, res: Response) => {
     });
   }
 };
-export const getPersonalLeaveRequests = async (req: Request, res: Response) => {
+export const getPersonalLeaveRequests = async (
+  _req: Request,
+  res: Response
+) => {
   const studentUsers = alias(usersTable, "student");
   try {
     const { id } = res.locals.userData;
@@ -143,7 +147,7 @@ export const getPersonalLeaveRequests = async (req: Request, res: Response) => {
       .json({ message: "An error occurred while fetching leave data" });
   }
 };
-export const getLeaveBalance = async (req: Request, res: Response) => {
+export const getLeaveBalance = async (_req: Request, res: Response) => {
   try {
     const { id } = res.locals.userData;
     const [userLeave] = await db
