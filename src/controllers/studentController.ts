@@ -11,6 +11,7 @@ import {
 import { main } from "../services/emailService";
 import getAcademicYear from "../utils/getAcademicYear";
 import { DepartmentType, VALID_DEPARTMENTS } from "../types/types";
+import { alias } from "drizzle-orm/pg-core";
 export const studentRegister = async (req: Request, res: Response) => {
   try {
     const userData = userSchema.parse(req.body);
@@ -112,6 +113,7 @@ export const getLeavesByDepartment = async (req: Request, res: Response) => {
   }
 };
 export const getPersonalLeaveRequests = async (req: Request, res: Response) => {
+  const studentUsers = alias(usersTable, "student");
   try {
     const { id } = res.locals.userData;
     if (!id) {
@@ -126,9 +128,12 @@ export const getPersonalLeaveRequests = async (req: Request, res: Response) => {
         reason: leaveRequestsTable.reason,
         approvedBy: usersTable.name,
         status: leaveRequestsTable.status,
+        studentName: studentUsers.name,
+        image: studentUsers.image,
       })
       .from(leaveRequestsTable)
-      .leftJoin(usersTable, eq(leaveRequestsTable.approvedBy, usersTable.id)) // Left join to get approver's name
+      .leftJoin(usersTable, eq(leaveRequestsTable.approvedBy, usersTable.id))
+      .leftJoin(studentUsers, eq(leaveRequestsTable.userId, studentUsers.id))
       .where(eq(leaveRequestsTable.userId, id));
     res.status(200).json({ leaves });
   } catch (error) {
