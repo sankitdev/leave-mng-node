@@ -7,11 +7,13 @@ import {
   getStudentData,
   getUsers,
   processLeaveRequest,
+  updateUser,
   viewLeave,
 } from "../controllers/adminController";
 const admin = e.Router();
 
 admin.post("/user/:role", auth(["admin"]), addUser);
+admin.patch("/update/:role/:id", auth(["admin"]), updateUser);
 admin.delete("/user/:role/:userId", auth(["admin"]), deleteUser);
 admin.get("/users/:role", auth(["admin", "hod", "staff", "student"]), getUsers);
 admin.get("/leaves", auth(["admin", "hod", "staff"]), viewLeave);

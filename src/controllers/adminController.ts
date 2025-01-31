@@ -34,9 +34,9 @@ export const addUser = async (req: Request, res: Response) => {
 };
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const userRole = req.params.role;
-    const role = roles.find((find) => find.name === userRole);
-    if (!role || role.name === "admin") {
+    const { role, id } = req.params;
+    const userRole = roles.find((find) => find.name === role);
+    if (!userRole || userRole.name === "admin") {
       res.status(400).json({ message: "Invalid role provided" });
       return;
     }
@@ -44,6 +44,7 @@ export const updateUser = async (req: Request, res: Response) => {
     const data = await db
       .update(usersTable)
       .set({ ...updatedData })
+      .where(eq(usersTable.id, id))
       .returning({ name: usersTable.name, email: usersTable.email });
     res.status(200).json(data);
   } catch (error) {
