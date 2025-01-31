@@ -86,7 +86,7 @@ export const getUsers = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-export const viewLeave = async (req: Request, res: Response) => {
+export const viewLeave = async (_req: Request, res: Response) => {
   const studentUsers = alias(usersTable, "student_user");
   try {
     const leaves = await db
@@ -217,7 +217,7 @@ const handleReject = async (
     .set({ status: "rejected", approvedBy: approverId })
     .where(eq(leaveRequestsTable.id, leaveRequest.id));
 };
-export const getStudentData = async (req: Request, res: Response) => {
+export const getStudentData = async (_req: Request, res: Response) => {
   try {
     const data = await db
       .select({ count: count() })
@@ -230,7 +230,7 @@ export const getStudentData = async (req: Request, res: Response) => {
   }
 };
 
-export const dashboardInfo = async (req: Request, res: Response) => {
+export const dashboardInfo = async (_req: Request, res: Response) => {
   try {
     const [pendingRequests, approvedRequests, rejectedRequests] =
       await Promise.all([
