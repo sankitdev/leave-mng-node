@@ -94,6 +94,7 @@ export const logoutUser = (req: Request, res: Response) => {
       httpOnly: true,
       maxAge: 0,
       secure: true,
+      sameSite: "none",
     });
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {
